@@ -1,0 +1,196 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   AYRA · Tasarım Sistemi
+   İki renk ailesi taşır: gece mavisi (güven, kurumsallık) ve teal (çözüm,
+   hareket). Üçüncü bir marka rengi yoktur; kategori renkleri yalnızca
+   haritada ve rozetlerde küçük yüzeylerde kullanılır.
+   ========================================================================== */
+
+@theme {
+  /* — Gece mavisi ————————————————————————————————————— */
+  --color-ink-50:  #f4f6fa;
+  --color-ink-100: #e5eaf2;
+  --color-ink-200: #c8d3e4;
+  --color-ink-300: #9db0cd;
+  --color-ink-400: #556d92;
+  --color-ink-500: #46608a;
+  --color-ink-600: #2f4870;
+  --color-ink-700: #1f3557;
+  --color-ink-800: #152744;
+  --color-ink-900: #0b1c33;
+  --color-ink-950: #060f1e;
+
+  /* — Teal / turkuaz ——————————————————————————————————— */
+  --color-teal-50:  #ecfbf7;
+  --color-teal-100: #d0f5ec;
+  --color-teal-200: #a3ead9;
+  --color-teal-300: #68d8c3;
+  --color-teal-400: #33bfa7;
+  --color-teal-500: #14a38d;
+  --color-teal-600: #068272;
+  --color-teal-700: #08685d;
+  --color-teal-800: #0a534b;
+  --color-teal-900: #0b453f;
+
+  /* — Nötrler ————————————————————————————————————————— */
+  --color-surface:        #ffffff;
+  --color-surface-muted:  #f6f7f9;
+  --color-surface-sunken: #eef0f4;
+  --color-line:           #e2e5ec;
+  --color-line-strong:    #cbd1dc;
+
+  /* — Durum renkleri ——————————————————————————————————— */
+  --color-status-new:        #64748b;
+  --color-status-verified:   #2563a8;
+  --color-status-forwarded:  #4c51bf;
+  --color-status-review:     #a16207;
+  --color-status-waiting:    #b45309;
+  --color-status-resolved:   #068272;
+  --color-status-unresolved: #9f1239;
+
+  /* — Tipografi ————————————————————————————————————————
+     Ölçek 1.200 (minor third). Başlıklar sıkı, gövde geniş satır aralığı. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+               "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  --text-2xs: 0.6875rem;   --text-2xs--line-height: 1rem;
+  --text-xs:  0.75rem;     --text-xs--line-height: 1.125rem;
+  --text-sm:  0.8125rem;   --text-sm--line-height: 1.25rem;
+  --text-base:0.9375rem;   --text-base--line-height: 1.5rem;
+  --text-lg:  1.0625rem;   --text-lg--line-height: 1.625rem;
+  --text-xl:  1.25rem;     --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;      --text-2xl--line-height: 1.9rem;
+  --text-3xl: 1.875rem;    --text-3xl--line-height: 2.25rem;
+  --text-4xl: 2.375rem;    --text-4xl--line-height: 2.6rem;
+
+  /* — Köşeler —————————————————————————————————————————— */
+  --radius-md:  0.5rem;
+  --radius-lg:  0.75rem;
+  --radius-xl:  1rem;
+  --radius-2xl: 1.25rem;
+
+  /* — Gölge: yalnızca yükseltilmiş yüzeyler için, çok yumuşak ——— */
+  --shadow-card:  0 1px 2px rgb(11 28 51 / 0.06), 0 1px 3px rgb(11 28 51 / 0.04);
+  --shadow-raise: 0 4px 12px rgb(11 28 51 / 0.08), 0 1px 3px rgb(11 28 51 / 0.05);
+  --shadow-sheet: 0 -6px 28px rgb(11 28 51 / 0.12);
+
+  --spacing-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ==========================================================================
+   Temel katman
+   ========================================================================== */
+@layer base {
+  * { border-color: var(--color-line); }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-surface-muted);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+  }
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.018em;
+    font-weight: 650;
+    color: var(--color-ink-900);
+    text-wrap: balance;
+  }
+
+  p { text-wrap: pretty; }
+
+  /* Klavye kullanıcıları için her zaman görünür odak halkası */
+  :focus-visible {
+    outline: 2px solid var(--color-teal-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  :focus:not(:focus-visible) { outline: none; }
+
+  ::selection { background: var(--color-teal-200); color: var(--color-ink-900); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   Yardımcılar
+   ========================================================================== */
+@utility tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+/* Yalnızca ekran okuyucular için */
+@utility sr-only-focusable {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  &:focus {
+    position: fixed; top: 0.5rem; left: 0.5rem;
+    width: auto; height: auto;
+    clip-path: none; margin: 0;
+    padding: 0.5rem 0.875rem;
+    background: var(--color-ink-900); color: white;
+    border-radius: var(--radius-md);
+    z-index: 100;
+  }
+}
+
+/* ==========================================================================
+   MapLibre — varsayılan stilin AYRA'ya uyarlanması
+   ========================================================================== */
+.maplibregl-ctrl-attrib {
+  font-size: 10px !important;
+  background: rgb(255 255 255 / 0.82) !important;
+  border-radius: 6px 0 0 0 !important;
+}
+.maplibregl-ctrl-attrib a { color: var(--color-ink-500) !important; }
+.maplibregl-ctrl-group {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-card) !important;
+  border: 1px solid var(--color-line) !important;
+}
+.maplibregl-popup-content {
+  padding: 0 !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-raise) !important;
+  overflow: hidden;
+}
+.maplibregl-popup-tip { display: none !important; }
+.maplibregl-canvas:focus { outline: none; }
+
+/* ==========================================================================
+   Kurulum şeridi — alttan yumuşak giriş.
+   Hareket duyarlılığı olan kullanıcılar için motion-safe ile sınırlandırıldı.
+   ========================================================================== */
+@keyframes seritGir {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

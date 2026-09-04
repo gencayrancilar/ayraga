@@ -1,0 +1,16 @@
+# Vercel'e yüklenmesi gereksiz olanlar.
+# node_modules'ü Vercel zaten kendi kurar; yerel yüklemeler ve derleme
+# çıktıları da sunucuda yeniden üretilir.
+node_modules
+.next
+out
+storage/uploads
+*.log
+.DS_Store
+tsconfig.tsbuildinfo
+.env
+.env.local
+yedek
+
+# Kurulum arşivleri dağıtıma girmesin
+*.zip

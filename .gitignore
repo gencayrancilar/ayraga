@@ -1,0 +1,28 @@
+# Bağımlılıklar
+/node_modules
+
+# Derleme çıktısı
+/.next
+/out
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# Ortam dosyaları ve sırlar
+# vercel-env.txt gerçek veritabanı bağlantısını ve servis anahtarını taşır;
+# .env.example ise yalnızca örnek değerler içerdiği için izlenir.
+.env*
+!.env.example
+vercel-env.txt
+vercel-env-aktar.sh
+/.vercel
+
+# Kullanıcı yüklemeleri ve veritabanı yedekleri — kaynak kodu değil
+/storage
+/yedekler
+
+# Kurulum sırasında üretilen geçici paketler
+/_kurulum/*.zip
+/_kurulum/*.tar.gz
+
+# İşletim sistemi
+.DS_Store

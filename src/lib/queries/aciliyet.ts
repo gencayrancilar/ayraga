@@ -1,0 +1,23 @@
+import "server-only";
+import { withSystem } from "../db";
+import type { AcilKelime } from "@/components/report-form/AcilUyarisi";
+
+/**
+ * Acil kademesindeki kelimeler. Bildirim formu bunları istemciye alır ve
+ * kişi yazarken 112 uyarısını gösterir. Liste veritabanında tutulur ki
+ * kelime eklemek yeni bir dağıtım gerektirmesin.
+ */
+export async function acilKelimeler(): Promise<AcilKelime[]> {
+  const rows = await withSystem(
+    (tx) => tx`
+      select word, exclude, context_exclude from public.alert_keywords
+       where is_active and tier = 'acil'
+       order by word
+    `,
+  );
+  return rows.map((r) => ({
+    word: r.word as string,
+    exclude: (r.exclude as string[]) ?? [],
+    contextExclude: (r.context_exclude as string[]) ?? [],
+  }));
+}
