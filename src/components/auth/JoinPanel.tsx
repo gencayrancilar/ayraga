@@ -87,6 +87,11 @@ export function JoinPanel({
             </Field>
             {loginState.error && !loginState.field && <ErrorNote>{loginState.error}</ErrorNote>}
             <Button type="submit" size="lg" block loading={loginPending}>Giriş yap</Button>
+            <p className="text-center text-sm text-ink-500">
+              <Link href="/parola-sifirla" className="underline underline-offset-2 hover:text-ink-900">
+                Parolamı unuttum
+              </Link>
+            </p>
           </form>
         )}
 

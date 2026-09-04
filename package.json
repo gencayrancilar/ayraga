@@ -24,7 +24,8 @@
     "test:muhtar": "node scripts/test-muhtar.mjs",
     "make-admin": "node scripts/make-admin.mjs",
     "db:bundle": "node scripts/bundle-sql.mjs",
-    "fontlar": "node scripts/font-goem.mjs"
+    "fontlar": "node scripts/font-goem.mjs",
+    "test:parola": "node scripts/test-parola.mjs"
   },
   "dependencies": {
     "jose": "^6.2.10",
