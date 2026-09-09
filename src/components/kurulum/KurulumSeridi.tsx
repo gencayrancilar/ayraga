@@ -45,11 +45,23 @@ function yaz(anahtar: string, deger: string) {
   }
 }
 
+/**
+ * Şeridin çıkmayacağı ekranlar.
+ *
+ * Harita ekranı (/) listeye çıkışın da olduğu yerdir: alt kenarda "N bildirimi
+ * listele" düğmesi durur ve şerit tam onun üzerine oturuyordu. Kullanıcı
+ * haritadaki bildirimlerin listesini ne görebiliyor ne de dokunabiliyordu.
+ * Tanıtım amaçlı bir şerit, işleyen bir düğmenin önüne geçemez.
+ *
+ * Muhtar paneli de dışarıda: orası bir çalışma ekranı, vitrin değil.
+ */
 function gizlenecekYol(yol: string): boolean {
   return (
+    yol === "/" ||
     yol.startsWith("/kur") ||
     yol.startsWith("/bildir") ||
     yol.startsWith("/yonetim") ||
+    yol.startsWith("/muhtar") ||
     yol.startsWith("/giris")
   );
 }
