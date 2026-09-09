@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import {
-  kararVer, karariGeriAl, simdiGonder, kurumaTasi, atamayiKaldir, type OnayState,
+  kararVer, karariGeriAl, kurumaGonder, kurumaTasi, atamayiKaldir, type OnayState,
 } from "@/lib/actions/gonderim-onayi";
 import type { Aday, KurumOzeti, KurumSecenegi } from "@/lib/queries/gonderim-onayi";
 import { timeAgo } from "@/lib/format";
@@ -43,7 +43,7 @@ export function GonderimOnayi({
 }) {
   const [kararDurum, kararEylem, kararBekliyor] = useActionState<OnayState, FormData>(kararVer, { ok: false });
   const [geriDurum, geriEylem] = useActionState<OnayState, FormData>(karariGeriAl, { ok: false });
-  const [gonderDurum, gonderEylem, gonderBekliyor] = useActionState<OnayState, FormData>(simdiGonder, { ok: false });
+  const [gonderDurum, gonderEylem, gonderBekliyor] = useActionState<OnayState, FormData>(kurumaGonder, { ok: false });
   const [tasiDurum, tasiEylem, tasiBekliyor] = useActionState<OnayState, FormData>(kurumaTasi, { ok: false });
   const [kaldirDurum, kaldirEylem] = useActionState<OnayState, FormData>(atamayiKaldir, { ok: false });
 
@@ -61,7 +61,7 @@ export function GonderimOnayi({
   );
 
   const toplamOnayli = kurumlar.reduce((t, k) => t + k.onayli, 0);
-  const adresYok = secili && !secili.contact_email;
+  const adresYok = Boolean(secili && !secili.contact_email);
 
   function degistir(id: string) {
     setSecim((o) => { const y = new Set(o); y.has(id) ? y.delete(id) : y.add(id); return y; });
@@ -96,31 +96,6 @@ export function GonderimOnayi({
         <Kutu baslik="Gönderime hazır" deger={toplamOnayli} vurgu />
         <Kutu baslik="Listeden çıkarılan" deger={kurumlar.reduce((t, k) => t + k.haric, 0)} />
       </section>
-
-      {toplamOnayli > 0 && (
-        <form
-          action={gonderEylem}
-          onSubmit={(e) => {
-            if (!confirm(
-              `${toplamOnayli} onaylı bildirim ilgili kurumlara e-posta ile gönderilecek.\n\n`
-              + "Bu işlem geri alınamaz. Devam edilsin mi?",
-            )) e.preventDefault();
-          }}
-          className="flex flex-wrap items-center gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4"
-        >
-          <p className="min-w-0 flex-1 text-sm text-teal-900">
-            <strong className="font-semibold">{toplamOnayli} bildirim</strong> gönderime hazır.
-            Pazartesi sabahı kendiliğinden gidecek; beklemesin isterseniz şimdi gönderin.
-          </p>
-          <button
-            type="submit"
-            disabled={gonderBekliyor}
-            className="h-10 shrink-0 rounded-xl bg-teal-700 px-4 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
-          >
-            {gonderBekliyor ? "Gönderiliyor…" : "Onaylananları şimdi gönder"}
-          </button>
-        </form>
-      )}
 
       <section>
         <h2 className="mb-3 text-base font-semibold text-ink-900">Kurumlar</h2>
@@ -174,6 +149,34 @@ export function GonderimOnayi({
               Bu kurumun görev alanına giren, henüz iletilmemiş bildirimler
             </p>
           </div>
+
+          {secili.onayli > 0 && (
+            <form
+              action={gonderEylem}
+              onSubmit={(e) => {
+                if (!confirm(
+                  `${secili.onayli} bildirim, ${secili.authority_name} kurumuna\n`
+                  + `${secili.contact_email ?? "—"} adresine e-posta ile gönderilecek.\n\n`
+                  + "Bu işlem geri alınamaz. Listeyi kontrol ettiniz mi?",
+                )) e.preventDefault();
+              }}
+              className="flex flex-wrap items-center gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4"
+            >
+              <input type="hidden" name="authorityId" value={secili.authority_id} />
+              <p className="min-w-0 flex-1 text-sm text-teal-900">
+                <strong className="font-semibold tabular-nums">{secili.onayli} bildirim</strong>
+                {" "}onaylı. Göndermeden önce &quot;Onaylı&quot; sekmesinden listeyi bir kez okuyun;
+                yanlış kuruma giden yazı geri alınamaz.
+              </p>
+              <button
+                type="submit"
+                disabled={gonderBekliyor || adresYok}
+                className="h-10 shrink-0 rounded-xl bg-teal-700 px-4 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+              >
+                {gonderBekliyor ? "Gönderiliyor…" : `${secili.authority_name} kurumuna gönder`}
+              </button>
+            </form>
+          )}
 
           {adresYok && (
             <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">

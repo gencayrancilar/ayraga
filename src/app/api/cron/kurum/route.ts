@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
-import { haftalikKurumGonderimi } from "@/lib/kurum-bildirim";
+import { withSystem } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 30;
 
 /**
- * Haftalık kurum gönderimi.
+ * Kurum gönderim durumu — yalnızca rapor verir, HİÇBİR ŞEY GÖNDERMEZ.
  *
- * Vercel'in ücretsiz planında cron günde bir kez çalışabildiği için bu uç
- * her gün tetiklenir ve yalnızca pazartesi iş görür. Gün kontrolü Türkiye
- * saatine göre yapılır; sunucu UTC'dedir.
+ * Bu uç eskiden pazartesileri kendiliğinden posta gönderiyordu. Kaldırıldı:
+ * kuruma resmî yazı göndermek geri alınamaz bir iştir ve yanlış yönlendirilmiş
+ * bir bildirimin fark edilme şansı, gönderimden önce bir insanın listeye
+ * bakmasına bağlıdır. Gönderim artık Yönetim → Gönderim onayı ekranından,
+ * kurum kurum, elle yapılır.
  *
- * Yetki: Vercel cron çağrılarına CRON_SECRET ile imza atar. Uç herkese açık
- * olamaz — aksi hâlde birisi tekrar tekrar çağırıp kurumlara posta yağdırabilir.
+ * Uç, ne kadar işin beklediğini görmek için duruyor. Acil bildirimler bu
+ * akışın dışındadır; onlar kaydedilir kaydedilmez iletilir.
  */
 export async function GET(request: Request) {
   const gizli = process.env.CRON_SECRET;
@@ -21,21 +23,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
   }
 
-  const url = new URL(request.url);
-  const zorla = url.searchParams.get("zorla") === "1";
+  const ozet = await withSystem((tx) => tx`select * from public.gonderim_ozeti()`);
 
-  const gun = new Date().toLocaleDateString("en-US", {
-    timeZone: "Europe/Istanbul", weekday: "short",
+  return NextResponse.json({
+    tamam: true,
+    gonderim: "kapalı — gönderim Yönetim → Gönderim onayı ekranından elle yapılır",
+    kurumlar: (ozet as unknown as Array<{
+      authority_name: string; bekleyen: number; onayli: number;
+    }>)
+      .filter((k) => k.bekleyen > 0 || k.onayli > 0)
+      .map((k) => ({ kurum: k.authority_name, kararBekleyen: k.bekleyen, gonderimeHazir: k.onayli })),
   });
-  if (gun !== "Mon" && !zorla) {
-    return NextResponse.json({ atlandi: true, gun });
-  }
-
-  try {
-    const sonuc = await haftalikKurumGonderimi();
-    return NextResponse.json({ tamam: true, ...sonuc });
-  } catch (err) {
-    console.error("kurum cron", err);
-    return NextResponse.json({ error: "Gönderim başarısız" }, { status: 500 });
-  }
 }

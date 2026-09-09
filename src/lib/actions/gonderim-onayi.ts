@@ -110,28 +110,29 @@ export async function karariGeriAl(_prev: OnayState, formData: FormData): Promis
 }
 
 /**
- * Onaylanmış her şeyi beklemeden gönderir.
+ * Bir kurumun onaylanmış bildirimlerini o kuruma gönderir.
  *
- * Pazartesi cron'u da aynı işi yapar; bu düğme "hazır, beklemesin" içindir.
- * Geri alınamaz: kurumlara resmî yazı çıkar.
+ * Gönderim kurum bazındadır ve elle tetiklenir; kendiliğinden hiçbir şey
+ * gitmez. Sebebi: yanlış kuruma giden resmî yazı geri alınamaz, ve toplu
+ * gönderim yanlış yönlendirmeyi fark etme şansını ortadan kaldırıyor.
  */
-export async function simdiGonder(_prev: OnayState, _formData: FormData): Promise<OnayState> {
+export async function kurumaGonder(_prev: OnayState, formData: FormData): Promise<OnayState> {
+  const id = formData.get("authorityId");
+  if (typeof id !== "string" || !z.string().uuid().safeParse(id).success) {
+    return { ok: false, error: "Kurum seçilmedi." };
+  }
   try {
     await requireModerator();
-    const { haftalikKurumGonderimi } = await import("../kurum-bildirim");
-    const sonuc = await haftalikKurumGonderimi();
+    const { kurumaGonderimYap } = await import("../kurum-bildirim");
+    const sonuc = await kurumaGonderimYap(id);
 
-    tazele();
+    tazele(id);
     if (sonuc.meshgul) return { ok: false, error: sonuc.ayrinti[0] ?? "Başka bir gönderim sürüyor." };
-    if (sonuc.gonderildi === 0 && sonuc.hata === 0) {
-      return { ok: true, message: "Gönderilecek onaylı bildirim yoktu." };
+    if (sonuc.hata) return { ok: false, error: sonuc.ayrinti.join(" · ") || "Gönderim başarısız." };
+    if (sonuc.gonderildi === 0) {
+      return { ok: true, message: "Bu kurumda gönderilecek onaylı bildirim yoktu." };
     }
-    return {
-      ok: true,
-      message: `${sonuc.gonderildi} kuruma gönderildi`
-        + (sonuc.hata ? `, ${sonuc.hata} kurumda hata` : "")
-        + ". " + sonuc.ayrinti.join(" · "),
-    };
+    return { ok: true, message: sonuc.ayrinti.join(" · ") };
   } catch (err) {
     return hata(err, "Gönderim yapılamadı.");
   }

@@ -16,9 +16,13 @@ vercel-env.txt
 vercel-env-aktar.sh
 /.vercel
 
-# Kullanıcı yüklemeleri ve veritabanı yedekleri — kaynak kodu değil
+# Kullanıcı yüklemeleri ve veritabanı yedekleri — kaynak kodu değil.
+# Yedek dosyaları bütün bildirimleri, profilleri ve e-posta adreslerini
+# taşır; depoya asla girmemeli. Betiğin varsayılan klasörü "yedek".
 /storage
+/yedek
 /yedekler
+*.json.gz
 
 # Kurulum sırasında üretilen geçici paketler
 /_kurulum/*.zip

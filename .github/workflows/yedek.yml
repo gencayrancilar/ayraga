@@ -1,0 +1,82 @@
+# =============================================================================
+# AYRA · Günlük veritabanı yedeği
+#
+# Supabase'in ücretsiz planında otomatik yedek yoktur; yedek almak tamamen
+# proje sahibinin işidir. Bu iş akışı onu her gece kendiliğinden yapar.
+#
+# Yedek, iş akışı çıktısı (artifact) olarak saklanır: depoya commit edilmez,
+# çünkü veritabanı içeriğinin sürüm geçmişinde birikmesi istenmez.
+#
+# Gereken tek ayar: depo ayarlarında DATABASE_URL adlı bir secret.
+# Settings → Secrets and variables → Actions → New repository secret
+#
+# ÖNEMLİ: Deponun özel (private) olması gerekir. Herkese açık depolarda iş
+# akışı çıktıları da herkese açıktır ve yedek indirilebilir hâle gelir.
+# =============================================================================
+
+name: Günlük yedek
+
+on:
+  schedule:
+    # 00:00 UTC = Türkiye saatiyle 03:00. Sitenin en sakin olduğu saat.
+    - cron: "0 0 * * *"
+  workflow_dispatch:        # elle de çalıştırılabilsin
+
+concurrency:
+  group: yedek
+  cancel-in-progress: false
+
+jobs:
+  yedek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Bağımlılıklar
+        run: npm ci --omit=dev --ignore-scripts
+
+      - name: Yedeği al
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          YEDEK_DIZINI: yedek
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL secret tanımlı değil."
+            echo "Settings → Secrets and variables → Actions'tan ekleyin."
+            exit 1
+          fi
+          node scripts/yedek.mjs
+
+      - name: Çıktı olarak sakla
+        uses: actions/upload-artifact@v4
+        with:
+          name: ayra-yedek-${{ github.run_id }}
+          path: yedek/*.json.gz
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Özet
+        if: always()
+        run: |
+          {
+            echo "### AYRA yedeği"
+            echo ""
+            if ls yedek/*.json.gz >/dev/null 2>&1; then
+              echo "| Dosya | Boyut |"
+              echo "|---|---|"
+              for f in yedek/*.json.gz; do
+                echo "| \`$(basename "$f")\` | $(du -h "$f" | cut -f1) |"
+              done
+              echo ""
+              echo "Yukarıdaki **Artifacts** bölümünden indirilebilir · 90 gün saklanır."
+            else
+              echo "Yedek alınamadı."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

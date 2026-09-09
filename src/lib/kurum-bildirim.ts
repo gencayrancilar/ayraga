@@ -189,36 +189,45 @@ export async function acilBildirimGonder(reportId: string): Promise<GonderimSonu
 const KILIT = "haftalik_kurum_gonderimi";
 
 /**
- * Her kuruma, kendisine düşen ve henüz iletilmemiş sorunların listesini yollar.
+ * Tek bir kuruma, o kurum için onaylanmış sorunların listesini yollar.
  *
- * Çalışma bir kilit altında yürür: uç arka arkaya iki kez tetiklenirse ikinci
- * çağrı listeyi hiç okumadan geri döner. Kilitsiz hâlde ikinci çalışma,
- * birincisi kayıtları işlemeden aynı listeyi okuyup kuruma aynı yazıyı ikinci
- * kez gönderebiliyordu.
+ * Gönderim bilerek kurum bazındadır ve elle tetiklenir. Tek düğmeyle bütün
+ * kurumlara aynı anda posta çıkması, yanlış yönlendirilmiş bir bildirimi
+ * fark etme şansını ortadan kaldırıyordu: yanlış kuruma giden yazı geri
+ * alınamaz. Artık her kurumun listesi ayrı ayrı onaylanır ve ayrı gönderilir.
+ *
+ * Çalışma bir kilit altında yürür: aynı kuruma arka arkaya iki kez
+ * basılırsa ikinci çağrı listeyi hiç okumadan geri döner.
  */
-export async function haftalikKurumGonderimi(): Promise<GonderimSonucu> {
+export async function kurumaGonderimYap(authorityId: string): Promise<GonderimSonucu> {
   const kilitAlindi = await withSystem(
     async (tx) => (await tx`select public.is_kilitle(${KILIT}) as ok`)[0]?.ok === true,
   );
   if (!kilitAlindi) {
     return { gonderildi: 0, atlanan: 0, hata: 0, meshgul: true,
-             ayrinti: ["Önceki gönderim hâlâ sürüyor; bu çağrı hiçbir şey göndermedi."] };
+             ayrinti: ["Başka bir gönderim sürüyor; bu çağrı hiçbir şey göndermedi."] };
   }
 
   try {
-    return await gonderimiYurut();
+    return await gonderimiYurut(authorityId);
   } finally {
     await withSystem((tx) => tx`select public.is_kilidi_coz(${KILIT})`);
   }
 }
 
-async function gonderimiYurut(): Promise<GonderimSonucu> {
+async function gonderimiYurut(authorityId: string): Promise<GonderimSonucu> {
   const ayrinti: string[] = [];
   let gonderildi = 0, atlanan = 0, hata = 0;
 
   const kurumlar = await withSystem(
-    (tx) => tx`select id, name, contact_email from public.authorities where is_active order by name`,
+    (tx) => tx`
+      select id, name, contact_email from public.authorities
+       where is_active and id = ${authorityId}
+    `,
   );
+  if (!kurumlar.length) {
+    return { gonderildi: 0, atlanan: 0, hata: 1, ayrinti: ["Kurum bulunamadı."] };
+  }
 
   for (const kurum of kurumlar) {
     const bekleyen = (await withSystem(
