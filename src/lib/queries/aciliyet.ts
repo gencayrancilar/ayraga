@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { withSystem } from "../db";
 import type { AcilKelime } from "@/components/report-form/AcilUyarisi";
 
@@ -7,7 +8,13 @@ import type { AcilKelime } from "@/components/report-form/AcilUyarisi";
  * kişi yazarken 112 uyarısını gösterir. Liste veritabanında tutulur ki
  * kelime eklemek yeni bir dağıtım gerektirmesin.
  */
-export async function acilKelimeler(): Promise<AcilKelime[]> {
+export const acilKelimeler = unstable_cache(
+  _acilKelimeler,
+  ["ayra:acil-kelimeler"],
+  { revalidate: 600, tags: ["alert-keywords"] },
+);
+
+async function _acilKelimeler(): Promise<AcilKelime[]> {
   const rows = await withSystem(
     (tx) => tx`
       select word, exclude, context_exclude from public.alert_keywords

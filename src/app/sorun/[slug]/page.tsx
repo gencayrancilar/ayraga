@@ -82,9 +82,12 @@ export default async function ReportDetailPage({ params, searchParams }: Props) 
     .update(`${h.get("x-forwarded-for") ?? "?"}|${h.get("user-agent") ?? "?"}|${new Date().toDateString()}|ayra`)
     .digest("hex")
     .slice(0, 40);
-  const viewCount = await registerView(r.id, viewerHash);
-
-  const nearby = (await reportsNearby(r.latitude, r.longitude, 700, 6)).filter((n) => n.id !== r.id).slice(0, 3);
+  // İkisi birbirinden bağımsız; sırayla beklemek sayfayı bir sorgu boyu geciktiriyordu.
+  const [viewCount, yakindakiler] = await Promise.all([
+    registerView(r.id, viewerHash),
+    reportsNearby(r.latitude, r.longitude, 700, 6),
+  ]);
+  const nearby = yakindakiler.filter((n) => n.id !== r.id).slice(0, 3);
 
   const issueMedia = media.filter((m) => m.kind === "issue");
   const resolutionMedia = media.filter((m) => m.kind === "resolution");

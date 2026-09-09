@@ -45,7 +45,21 @@ export type NeighborhoodRow = {
   open_count: number; resolved_count: number; score: number | null;
 };
 
-export async function getNeighborhoods(opts: { activeOnly?: boolean; withReportsOnly?: boolean } = {}) {
+/**
+ * Mahalle listesi.
+ *
+ * Sunucu Frankfurt'ta, veritabanı da öyle; ama bu liste her sayfa açılışında
+ * yeniden çekilmeyi hak etmiyor. İçindeki açık bildirim sayacının birkaç
+ * dakika gecikmesi kimseyi yanıltmaz, buna karşılık harita ve keşfet
+ * ekranları belirgin biçimde erken açılır.
+ */
+export const getNeighborhoods = unstable_cache(
+  _getNeighborhoods,
+  ["ayra:neighborhoods"],
+  { revalidate: 120, tags: ["neighborhoods"] },
+);
+
+async function _getNeighborhoods(opts: { activeOnly?: boolean; withReportsOnly?: boolean } = {}) {
   return withSystem(
     (tx) => tx<NeighborhoodRow[]>`
       select n.id, n.name, n.slug, n.center_lat, n.center_lng, n.population,
@@ -96,7 +110,14 @@ export async function getNeighborhoodScore(neighborhoodId: string): Promise<Neig
   return row.score as NeighborhoodScore;
 }
 
-export async function getPlatformStats(citySlug?: string): Promise<PlatformStats> {
+/** Ana sayfadaki sayaçlar. Anlık olmaları gerekmiyor. */
+export const getPlatformStats = unstable_cache(
+  _getPlatformStats,
+  ["ayra:stats"],
+  { revalidate: 120, tags: ["stats"] },
+);
+
+async function _getPlatformStats(citySlug?: string): Promise<PlatformStats> {
   const [row] = await withSystem(
     (tx) => tx`select public.platform_stats(${citySlug ?? null}) as stats`,
   );
@@ -112,7 +133,14 @@ export async function getPlatformStats(citySlug?: string): Promise<PlatformStats
   };
 }
 
-export async function getAuthorities() {
+/** Kurum listesi — panelden değişir, sık değil. */
+export const getAuthorities = unstable_cache(
+  _getAuthorities,
+  ["ayra:authorities"],
+  { revalidate: 300, tags: ["authorities"] },
+);
+
+async function _getAuthorities() {
   return withSystem(
     (tx) => tx`
       select a.id, a.name, a.slug, a.short_name, a.kind, a.website,
